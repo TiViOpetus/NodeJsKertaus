@@ -8,6 +8,10 @@
 const express = require('express');
 const {engine} = require('express-handlebars');
 
+// PostgreSQL-palvelimen yhteysvaranto (pool)
+const Pool = require('pg').Pool;
+
+
 // ASETUKSET
 // ---------
 
@@ -29,6 +33,24 @@ app.engine('handlebars', engine());
 app.set('view engine', 'handlebars');
 app.set('views', './views');
 
+// Määritellään tietokantayhteyden parametrit
+const pool = new Pool({
+    user: 'websovellus',
+    password: 'Q2werty7',
+    host: '127.0.0.1',
+    port: '5432',
+    database: 'autolainaus'
+});
+
+// FUNKTIOT
+// --------
+
+// Suoritetaan select-kysely
+const getSqlData = async (sqlstatement) => {
+    let resultset = await pool.query(sqlstatement);
+    return resultset; 
+};
+
 // URL-REITITYS
 // ------------
 
@@ -39,6 +61,11 @@ app.get('/', (req, res) => {
         'meal': 'riisiä ja kanaa tandori-kastikkeessa'
     };
     res.render('index', indexData);
+});
+
+// Tietokantatestin sivu
+app.get('/dbtest', (req, res) => {
+    let pageData = getSqlData("SELECT rekisterinumero, merkki, malli FROM public.vapaana WHERE rekisterinumero = 'OXZ-915'").then((resultset) => {console.log(resultset.rows)});
 });
 // About-sivu
 app.get('/about', (req, res) => {
